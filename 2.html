@@ -1,0 +1,1030 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vishal Plywood and Hardware Store - Billing App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1a202c;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        @media (min-width: 1024px) {
+            body {
+                padding: 2rem;
+            }
+        }
+
+        .container {
+            max-width: 1200px;
+            background-color: #ffffff;
+            border-radius: 2rem;
+            border: 1px solid rgba(226, 232, 240, 0.7);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            width: 100%;
+        }
+
+        @media (min-width: 1024px) {
+            .container {
+                padding: 2.5rem;
+            }
+        }
+
+        .card {
+            background-color: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease;
+            border: 1px solid #e2e8f0;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background-image: linear-gradient(to right, #6b46c1, #5a67d8);
+            color: #ffffff;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-image 0.4s ease;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+        .btn-primary:hover {
+            background-image: linear-gradient(to right, #5a67d8, #6b46c1);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .btn-secondary {
+            background-color: #e2e8f0;
+            color: #4a5568;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+        .btn-secondary:hover {
+            background-color: #cbd5e0;
+            transform: translateY(-1px);
+        }
+
+        .input-field {
+            border: 1px solid #e2e8f0;
+            background-color: #f8fafc;
+            border-radius: 0.75rem;
+            padding: 0.8rem 1rem;
+            width: 100%;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #6b46c1;
+            box-shadow: 0 0 0 4px rgba(107, 70, 193, 0.25);
+            background-color: #ffffff;
+        }
+        .qr-code {
+            border: 2px solid #6b46c1;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            background-color: #ffffff;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .whatsapp-link {
+            text-decoration: none;
+        }
+        .bill-table-container {
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        .bill-table th, .bill-table td {
+            padding: 1.25rem 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .bill-table th, .bill-table td {
+                padding: 0.75rem 1rem;
+            }
+        }
+
+        .bill-table tr:nth-child(even) {
+            background-color: #f7fafc;
+        }
+        .bill-table tr:hover {
+            background-color: #e6e9f0;
+            transition: background-color 0.2s ease;
+        }
+
+        @media (min-width: 1024px) {
+            .sticky-summary {
+                position: sticky;
+                top: 2rem;
+            }
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal.is-open {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            max-width: 90%;
+            width: 400px;
+        }
+        @media (min-width: 640px) {
+            .modal-content {
+                padding: 2.5rem;
+            }
+        }
+        .modal.is-open .modal-content {
+            transform: scale(1);
+        }
+
+        #billPreviewModal .bill-content {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12px;
+            color: #000;
+        }
+
+        @media (min-width: 640px) {
+            #billPreviewModal .bill-content {
+                font-size: 14px;
+            }
+        }
+
+        #billPreviewModal .bill-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #billPreviewModal .bill-details p {
+            margin: 0;
+        }
+        #billPreviewModal .bill-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        #billPreviewModal .bill-table th, #billPreviewModal .bill-table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        #billPreviewModal .bill-table th {
+            background-color: #f2f2f2;
+        }
+        #billPreviewModal .bill-footer {
+            margin-top: 20px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container mx-auto">
+        <div class="mb-8 text-center">
+            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-800">Vishal Plywood and Hardware Store</h1>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <div class="lg:col-span-2 card p-6 sm:p-8">
+                <h2 class="text-xl sm:text-2xl font-semibold mb-6 text-gray-700">Bill Generation Module</h2>
+
+                <div class="mb-8 border-b pb-8 border-gray-200">
+                    <h3 class="text-lg font-medium mb-4 text-gray-600">Customer Details</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div>
+                            <label for="customerName" class="block text-sm font-medium mb-1 text-gray-600">Customer Name</label>
+                            <input type="text" id="customerName" class="input-field" placeholder="Enter customer name">
+                        </div>
+                        <div>
+                            <label for="whatsappNumber" class="block text-sm font-medium mb-1 text-gray-600">WhatsApp Number</label>
+                            <input type="tel" id="whatsappNumber" class="input-field" placeholder="e.g., 919453338886">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-8 border-b pb-8 border-gray-200">
+                    <h3 class="text-lg font-medium mb-4 text-gray-600">Plywood</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div>
+                            <label for="plywoodQuality" class="block text-sm font-medium mb-1 text-gray-600">Quality</label>
+                            <select id="plywoodQuality" class="input-field">
+                                <option value="">Select Quality</option>
+                                <option value="MR">MR</option>
+                                <option value="Commercial">Commercial</option>
+                                <option value="BR">BR</option>
+                                <option value="UP Shurithing">UP Shurithing</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="plywoodSize" class="block text-sm font-medium mb-1 text-gray-600">Size (in ft)</label>
+                            <select id="plywoodSize" class="input-field">
+                                <option value="">Select Size</option>
+                                <option value="3x6">3x6</option>
+                                <option value="4x6">4x6</option>
+                                <option value="7x3">7x3</option>
+                                <option value="8x4">8x4</option>
+                                <option value="1x6">1x6</option>
+                                <option value="2x6">2x6</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="plywoodThickness" class="block text-sm font-medium mb-1 text-gray-600">Thickness (in mm)</label>
+                            <select id="plywoodThickness" class="input-field">
+                                <option value="">Select Thickness</option>
+                                <option value="6mm">6mm</option>
+                                <option value="10mm">10mm</option>
+                                <option value="12mm">12mm</option>
+                                <option value="16mm">16mm</option>
+                                <option value="18mm">18mm</option>
+                                <option value="20mm">20mm</option>
+                                <option value="25mm">25mm</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="plywoodSqFtPrice" class="block text-sm font-medium mb-1 text-gray-600">Price/Sq Ft</label>
+                            <input type="number" id="plywoodSqFtPrice" class="input-field" placeholder="Enter price per sq ft">
+                        </div>
+                    </div>
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div>
+                            <label for="plywoodQuantity" class="block text-sm font-medium mb-1 text-gray-600">Quantity (Box)</label>
+                            <input type="number" id="plywoodQuantity" class="input-field" placeholder="Enter quantity">
+                        </div>
+                        <div>
+                            <label for="plywoodDiscountPercent" class="block text-sm font-medium mb-1 text-gray-600">Discount (%)</label>
+                            <input type="number" id="plywoodDiscountPercent" class="input-field" placeholder="e.g., 10">
+                        </div>
+                        <div>
+                            <label for="plywoodDiscountRupees" class="block text-sm font-medium mb-1 text-gray-600">Discount (₹)</label>
+                            <input type="number" id="plywoodDiscountRupees" class="input-field" placeholder="e.g., 500">
+                        </div>
+                    </div>
+                    <div class="flex justify-end mt-6">
+                        <button id="addPlywoodBtn" class="btn-secondary px-6 py-2 rounded-full text-sm font-medium">Add Plywood</button>
+                    </div>
+                </div>
+
+                <div class="mb-8 border-b pb-8 border-gray-200">
+                    <h3 class="text-lg font-medium mb-4 text-gray-600">Additional Items</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div>
+                            <label for="itemName" class="block text-sm font-medium mb-1 text-gray-600">Item Name</label>
+                            <input type="text" id="itemName" class="input-field" placeholder="e.g., Screws, Handles">
+                        </div>
+                        <div>
+                            <label for="itemQuality" class="block text-sm font-medium mb-1 text-gray-600">Quality</label>
+                            <select id="itemQuality" class="input-field">
+                                <option value="">Select Quality</option>
+                                <option value="Iron">Iron</option>
+                                <option value="Chrome Polished">Chrome Polished</option>
+                                <option value="Stainless Steel">Stainless Steel</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="itemQuantity" class="block text-sm font-medium mb-1 text-gray-600">Quantity</label>
+                            <input type="number" id="itemQuantity" class="input-field" placeholder="Enter quantity">
+                        </div>
+                        <div>
+                            <label for="itemPrice" class="block text-sm font-medium mb-1 text-gray-600">Price per piece</label>
+                            <input type="number" id="itemPrice" class="input-field" placeholder="Enter price">
+                        </div>
+                        <div>
+                            <label for="itemGramWeight" class="block text-sm font-medium mb-1 text-gray-600">Gram Weight (if applicable)</label>
+                            <input type="number" id="itemGramWeight" class="input-field" placeholder="Enter weight in grams">
+                        </div>
+                        <div>
+                            <label for="itemDiscountPercent" class="block text-sm font-medium mb-1 text-gray-600">Discount (%)</label>
+                            <input type="number" id="itemDiscountPercent" class="input-field" placeholder="e.g., 10">
+                        </div>
+                        <div>
+                            <label for="itemDiscountRupees" class="block text-sm font-medium mb-1 text-gray-600">Discount (₹)</label>
+                            <input type="number" id="itemDiscountRupees" class="input-field" placeholder="e.g., 50">
+                        </div>
+                    </div>
+                    <div class="flex justify-end mt-6">
+                        <button id="addItemBtn" class="btn-secondary px-6 py-2 rounded-full text-sm font-medium">Add Item</button>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-medium mb-4 text-gray-600">Itemized Bill</h3>
+                    <div class="bill-table-container">
+                        <table class="min-w-full divide-y divide-gray-200 bill-table">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Price</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="billItems" class="bg-white divide-y divide-gray-200">
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-1">
+                <div class="sticky-summary card p-6 sm:p-8">
+                    <h2 class="text-xl sm:text-2xl font-semibold mb-6 text-gray-700">Bill Summary</h2>
+
+                    <div class="mb-4">
+                        <label for="deliveryCharges" class="block text-sm font-medium mb-1 text-gray-600">Delivery Charges</label>
+                        <input type="number" id="deliveryCharges" class="input-field" placeholder="Enter delivery charges (optional)" value="0">
+                    </div>
+
+                    <div class="flex justify-between items-center text-lg sm:text-xl font-medium mb-2">
+                        <span>Subtotal:</span>
+                        <span>₹ <span id="subtotal">0.00</span></span>
+                    </div>
+                    <div class="flex justify-between items-center text-lg sm:text-xl font-medium mb-2">
+                        <span>Discount:</span>
+                        <span>- ₹ <span id="totalDiscount">0.00</span></span>
+                    </div>
+                    <div class="flex justify-between items-center text-lg sm:text-xl font-medium mb-4 pb-4 border-b border-gray-200">
+                        <span>Delivery:</span>
+                        <span>+ ₹ <span id="deliveryTotal">0.00</span></span>
+                    </div>
+                    <div class="flex justify-between items-center text-xl sm:text-2xl font-bold mb-6">
+                        <span>Grand Total:</span>
+                        <span>₹ <span id="grandTotal">0.00</span></span>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4">
+                        <button id="previewBillBtn" class="btn-secondary w-full py-3 sm:py-4 rounded-full text-lg font-semibold">Preview Bill</button>
+                        <button id="generateBillBtn" class="btn-primary w-full py-3 sm:py-4 rounded-full text-lg font-semibold">Generate Bill</button>
+                    </div>
+
+                    <div id="paymentSection" class="hidden mt-8">
+                        <h3 class="text-lg font-medium mb-4 text-center text-gray-600">Payment Details</h3>
+                        <div class="text-center mb-6">
+                            <p class="text-sm text-gray-600 mb-4">Scan QR Code or use UPI ID for payment.</p>
+                            <div class="flex justify-center mb-6">
+                                <div id="qrCodeContainer" class="qr-code"></div>
+                            </div>
+                            <p class="text-sm font-semibold text-gray-600">UPI ID: <span class="font-normal text-blue-600">9453338886@OKBIZAXIS</span></p>
+                        </div>
+
+                        <div class="mt-4">
+                            <label for="cashReceived" class="block text-sm font-medium mb-1 text-gray-600">Cash Received</label>
+                            <input type="number" id="cashReceived" class="input-field" placeholder="Enter cash payment amount">
+                        </div>
+                        <button id="generateBalanceQrBtn" class="btn-primary w-full py-3 sm:py-4 rounded-full text-lg font-semibold mt-4">Generate Balance QR</button>
+                        <div id="balanceSection" class="hidden mt-4 text-center">
+                            <p class="text-xl font-semibold text-gray-700">Remaining Balance: ₹ <span id="remainingBalance">0.00</span></p>
+                            <div id="balanceQrContainer" class="qr-code mx-auto mt-4"></div>
+                        </div>
+
+                        <a id="whatsappBtn" href="#" class="whatsapp-link mt-6 block" target="_blank">
+                            <button class="btn-primary w-full py-3 sm:py-4 rounded-full text-lg font-semibold">Send Bill on WhatsApp</button>
+                        </a>
+                        <a id="smsBtn" href="#" class="whatsapp-link mt-4 block">
+                            <button class="btn-secondary w-full py-3 sm:py-4 rounded-full text-lg font-semibold">Send Bill via SMS</button>
+                        </a>
+                        <div class="grid grid-cols-2 gap-4 mt-4">
+                            <button id="downloadPdfBtn" class="btn-secondary w-full py-2 rounded-full text-sm font-medium">Download PDF</button>
+                            <button id="downloadPngBtn" class="btn-secondary w-full py-2 rounded-full text-sm font-medium">Download PNG</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="billPreviewModal" class="modal">
+        <div class="modal-content max-w-lg w-full p-8">
+            <div id="billPreviewContent" class="bill-content">
+                <div id="billContentToCapture">
+                </div>
+            </div>
+            <div class="flex justify-end mt-6">
+                <button id="closePreviewModalBtn" class="btn-secondary px-6 py-2 rounded-full">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="customModal" class="modal">
+        <div class="modal-content">
+            <p id="modalMessage" class="text-gray-700 mb-6"></p>
+            <button id="closeModalBtn" class="btn-primary px-6 py-2 rounded-full">Close</button>
+        </div>
+    </div>
+
+    <div id="editItemModal" class="modal">
+        <div class="modal-content p-8">
+            <h3 class="text-2xl font-semibold mb-6 text-gray-700">Edit Item</h3>
+            <div id="editItemForm">
+            </div>
+            <div class="flex justify-end gap-4 mt-6">
+                <button id="cancelEditBtn" class="btn-secondary px-6 py-2 rounded-full">Cancel</button>
+                <button id="saveEditBtn" class="btn-primary px-6 py-2 rounded-full">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // A single, organized object to manage all DOM elements
+        const DOMElements = {
+            plywoodQuality: document.getElementById('plywoodQuality'),
+            plywoodSize: document.getElementById('plywoodSize'),
+            plywoodThickness: document.getElementById('plywoodThickness'),
+            plywoodSqFtPrice: document.getElementById('plywoodSqFtPrice'),
+            plywoodQuantity: document.getElementById('plywoodQuantity'),
+            plywoodDiscountPercent: document.getElementById('plywoodDiscountPercent'),
+            plywoodDiscountRupees: document.getElementById('plywoodDiscountRupees'),
+            addPlywoodBtn: document.getElementById('addPlywoodBtn'),
+
+            itemName: document.getElementById('itemName'),
+            itemQuality: document.getElementById('itemQuality'),
+            itemQuantity: document.getElementById('itemQuantity'),
+            itemPrice: document.getElementById('itemPrice'),
+            itemGramWeight: document.getElementById('itemGramWeight'),
+            itemDiscountPercent: document.getElementById('itemDiscountPercent'),
+            itemDiscountRupees: document.getElementById('itemDiscountRupees'),
+            addItemBtn: document.getElementById('addItemBtn'),
+
+            customerName: document.getElementById('customerName'),
+            whatsappNumber: document.getElementById('whatsappNumber'),
+            deliveryChargesInput: document.getElementById('deliveryCharges'),
+
+            billItemsContainer: document.getElementById('billItems'),
+            subtotalSpan: document.getElementById('subtotal'),
+            totalDiscountSpan: document.getElementById('totalDiscount'),
+            deliveryTotalSpan: document.getElementById('deliveryTotal'),
+            grandTotalSpan: document.getElementById('grandTotal'),
+            previewBillBtn: document.getElementById('previewBillBtn'),
+            generateBillBtn: document.getElementById('generateBillBtn'),
+            paymentSection: document.getElementById('paymentSection'),
+            qrCodeContainer: document.getElementById('qrCodeContainer'),
+            whatsappBtn: document.getElementById('whatsappBtn'),
+            smsBtn: document.getElementById('smsBtn'),
+            downloadPdfBtn: document.getElementById('downloadPdfBtn'),
+            downloadPngBtn: document.getElementById('downloadPngBtn'),
+
+            cashReceivedInput: document.getElementById('cashReceived'),
+            generateBalanceQrBtn: document.getElementById('generateBalanceQrBtn'),
+            balanceSection: document.getElementById('balanceSection'),
+            remainingBalanceSpan: document.getElementById('remainingBalance'),
+            balanceQrContainer: document.getElementById('balanceQrContainer'),
+
+            customModal: document.getElementById('customModal'),
+            modalMessage: document.getElementById('modalMessage'),
+            closeModalBtn: document.getElementById('closeModalBtn'),
+
+            billPreviewModal: document.getElementById('billPreviewModal'),
+            billPreviewContent: document.getElementById('billPreviewContent'),
+            billContentToCapture: document.getElementById('billContentToCapture'),
+            closePreviewModalBtn: document.getElementById('closePreviewModalBtn'),
+
+            editItemModal: document.getElementById('editItemModal'),
+            editItemForm: document.getElementById('editItemForm'),
+            saveEditBtn: document.getElementById('saveEditBtn'),
+            cancelEditBtn: document.getElementById('cancelEditBtn')
+        };
+
+        // Global state variables
+        let items = [];
+        let editingIndex = -1;
+        const UPI_ID = '9453338886@OKBIZAXIS';
+        let grandTotal = 0;
+
+        // Helper function to show a custom alert modal
+        function showAlert(message) {
+            DOMElements.modalMessage.textContent = message;
+            DOMElements.customModal.classList.add('is-open');
+        }
+
+        // Helper function to hide the custom alert modal
+        function hideAlert() {
+            DOMElements.customModal.classList.remove('is-open');
+        }
+
+        // Function to calculate and update the bill summary
+        function updateBillSummary() {
+            let subtotal = 0;
+            let totalDiscount = 0;
+
+            items.forEach(item => {
+                subtotal += item.subtotal;
+                totalDiscount += item.discount;
+            });
+
+            const deliveryCharges = parseFloat(DOMElements.deliveryChargesInput.value) || 0;
+            grandTotal = (subtotal - totalDiscount) + deliveryCharges;
+
+            DOMElements.subtotalSpan.textContent = subtotal.toFixed(2);
+            DOMElements.totalDiscountSpan.textContent = totalDiscount.toFixed(2);
+            DOMElements.deliveryTotalSpan.textContent = deliveryCharges.toFixed(2);
+            DOMElements.grandTotalSpan.textContent = grandTotal.toFixed(2);
+        }
+
+        // Function to render the itemized bill table
+        function renderBillItems() {
+            DOMElements.billItemsContainer.innerHTML = '';
+            items.forEach((item, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.details}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.quantity}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">₹ ${item.total.toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button class="text-indigo-600 hover:text-indigo-900 mr-2" onclick="showEditModal(${index})">Edit</button>
+                        <button class="text-red-600 hover:text-red-900" onclick="removeItem(${index})">Remove</button>
+                    </td>
+                `;
+                DOMElements.billItemsContainer.appendChild(row);
+            });
+            updateBillSummary();
+        }
+
+        // Function to add a plywood item to the bill
+        function addPlywood() {
+            const quality = DOMElements.plywoodQuality.value;
+            const size = DOMElements.plywoodSize.value;
+            const thickness = DOMElements.plywoodThickness.value;
+            const pricePerSqFt = parseFloat(DOMElements.plywoodSqFtPrice.value);
+            const quantity = parseInt(DOMElements.plywoodQuantity.value);
+            const discountPercent = parseFloat(DOMElements.plywoodDiscountPercent.value) || 0;
+            const discountRupees = parseFloat(DOMElements.plywoodDiscountRupees.value) || 0;
+
+            // Validation
+            if (!quality || !size || !thickness || isNaN(pricePerSqFt) || pricePerSqFt <= 0 || isNaN(quantity) || quantity <= 0) {
+                showAlert('Please fill in all valid plywood fields.');
+                return;
+            }
+
+            const sizeParts = size.split('x');
+            const sqFt = parseInt(sizeParts[0]) * parseInt(sizeParts[1]);
+            const subtotal = sqFt * pricePerSqFt * quantity;
+            const discount = discountRupees > 0 ? discountRupees : (subtotal * (discountPercent / 100));
+            const total = subtotal - discount;
+
+            const item = {
+                type: 'plywood',
+                name: `Plywood (${quality})`,
+                details: `${thickness}, ${size}`,
+                quantity: quantity,
+                price_per_unit: pricePerSqFt,
+                sqFt: sqFt,
+                subtotal: subtotal,
+                discount: discount,
+                discountPercent: discountPercent,
+                discountRupees: discountRupees,
+                total: total
+            };
+
+            items.push(item);
+            renderBillItems();
+            resetPlywoodForm();
+        }
+
+        // Function to add an additional item to the bill
+        function addAdditionalItem() {
+            const name = DOMElements.itemName.value;
+            const quality = DOMElements.itemQuality.value;
+            const quantity = parseInt(DOMElements.itemQuantity.value);
+            const price = parseFloat(DOMElements.itemPrice.value);
+            const gramWeight = parseFloat(DOMElements.itemGramWeight.value) || 0;
+            const discountPercent = parseFloat(DOMElements.itemDiscountPercent.value) || 0;
+            const discountRupees = parseFloat(DOMElements.itemDiscountRupees.value) || 0;
+
+            // Validation
+            if (!name || isNaN(quantity) || quantity <= 0 || isNaN(price) || price <= 0) {
+                showAlert('Please fill in valid details for the additional item.');
+                return;
+            }
+
+            const subtotal = price * quantity;
+            const discount = discountRupees > 0 ? discountRupees : (subtotal * (discountPercent / 100));
+            const total = subtotal - discount;
+
+            const item = {
+                type: 'additional',
+                name: name,
+                details: quality ? `Quality: ${quality}` : (gramWeight ? `Weight: ${gramWeight}g` : 'N/A'),
+                quantity: quantity,
+                price_per_unit: price,
+                subtotal: subtotal,
+                discount: discount,
+                discountPercent: discountPercent,
+                discountRupees: discountRupees,
+                total: total
+            };
+
+            items.push(item);
+            renderBillItems();
+            resetItemForm();
+        }
+
+        // Function to remove an item from the bill
+        function removeItem(index) {
+            items.splice(index, 1);
+            renderBillItems();
+        }
+
+        // Function to show the edit modal with pre-filled data
+        function showEditModal(index) {
+            editingIndex = index;
+            const item = items[index];
+            DOMElements.editItemForm.innerHTML = '';
+
+            let formFields = '';
+            if (item.type === 'plywood') {
+                formFields = `
+                    <div class="mb-4">
+                        <label for="editPlywoodQuality" class="block text-sm font-medium mb-1 text-gray-600">Quality</label>
+                        <input type="text" id="editPlywoodQuality" class="input-field" value="${item.name.replace('Plywood (', '').replace(')', '')}">
+                    </div>
+                    <div class="mb-4">
+                        <label for="editPlywoodSize" class="block text-sm font-medium mb-1 text-gray-600">Size (in ft)</label>
+                        <input type="text" id="editPlywoodSize" class="input-field" value="${item.details.split(', ')[1].replace('ft', '')}">
+                    </div>
+                    <div class="mb-4">
+                        <label for="editPlywoodThickness" class="block text-sm font-medium mb-1 text-gray-600">Thickness (in mm)</label>
+                        <input type="text" id="editPlywoodThickness" class="input-field" value="${item.details.split(', ')[0].replace('mm', '')}">
+                    </div>
+                    <div class="mb-4">
+                        <label for="editPlywoodSqFtPrice" class="block text-sm font-medium mb-1 text-gray-600">Price/Sq Ft</label>
+                        <input type="number" id="editPlywoodSqFtPrice" class="input-field" value="${item.price_per_unit}">
+                    </div>
+                    <div class="mb-4">
+                        <label for="editPlywoodQuantity" class="block text-sm font-medium mb-1 text-gray-600">Quantity (Box)</label>
+                        <input type="number" id="editPlywoodQuantity" class="input-field" value="${item.quantity}">
+                    </div>
+                    <div class="mb-4">
+                        <label for="editPlywoodDiscountPercent" class="block text-sm font-medium mb-1 text-gray-600">Discount (%)</label>
+                        <input type="number" id="editPlywoodDiscountPercent" class="input-field" value="${item.discountPercent}">
+                    </div>
+                    <div class="mb-4">
+                        <label for="editPlywoodDiscountRupees" class="block text-sm font-medium mb-1 text-gray-600">Discount (₹)</label>
+                        <input type="number" id="editPlywoodDiscountRupees" class="input-field" value="${item.discountRupees}">
+                    </div>
+                `;
+            } else { // Additional item
+                formFields = `
+                    <div class="mb-4">
+                        <label for="editItemName" class="block text-sm font-medium mb-1 text-gray-600">Item Name</label>
+                        <input type="text" id="editItemName" class="input-field" value="${item.name}">
+                    </div>
+                    <div class="mb-4">
+                        <label for="editItemDetails" class="block text-sm font-medium mb-1 text-gray-600">Details</label>
+                        <input type="text" id="editItemDetails" class="input-field" value="${item.details}">
+                    </div>
+                    <div class="mb-4">
+                        <label for="editItemQuantity" class="block text-sm font-medium mb-1 text-gray-600">Quantity</label>
+                        <input type="number" id="editItemQuantity" class="input-field" value="${item.quantity}">
+                    </div>
+                    <div class="mb-4">
+                        <label for="editItemPrice" class="block text-sm font-medium mb-1 text-gray-600">Price per piece</label>
+                        <input type="number" id="editItemPrice" class="input-field" value="${item.price_per_unit}">
+                    </div>
+                    <div class="mb-4">
+                        <label for="editItemDiscountPercent" class="block text-sm font-medium mb-1 text-gray-600">Discount (%)</label>
+                        <input type="number" id="editItemDiscountPercent" class="input-field" value="${item.discountPercent}">
+                    </div>
+                    <div class="mb-4">
+                        <label for="editItemDiscountRupees" class="block text-sm font-medium mb-1 text-gray-600">Discount (₹)</label>
+                        <input type="number" id="editItemDiscountRupees" class="input-field" value="${item.discountRupees}">
+                    </div>
+                `;
+            }
+            DOMElements.editItemForm.innerHTML = formFields;
+            DOMElements.editItemModal.classList.add('is-open');
+        }
+
+        // Function to save changes from the edit modal
+        function saveEditChanges() {
+            if (editingIndex === -1) return;
+
+            const item = items[editingIndex];
+            if (item.type === 'plywood') {
+                const quality = document.getElementById('editPlywoodQuality').value;
+                const size = document.getElementById('editPlywoodSize').value;
+                const thickness = document.getElementById('editPlywoodThickness').value;
+                const pricePerSqFt = parseFloat(document.getElementById('editPlywoodSqFtPrice').value);
+                const quantity = parseInt(document.getElementById('editPlywoodQuantity').value);
+                const discountPercent = parseFloat(document.getElementById('editPlywoodDiscountPercent').value) || 0;
+                const discountRupees = parseFloat(document.getElementById('editPlywoodDiscountRupees').value) || 0;
+
+                // Re-validate and update item
+                if (!quality || !size || !thickness || isNaN(pricePerSqFt) || pricePerSqFt <= 0 || isNaN(quantity) || quantity <= 0) {
+                    showAlert('Please fill in all valid plywood fields in the edit form.');
+                    return;
+                }
+
+                const sizeParts = size.split('x');
+                const sqFt = parseInt(sizeParts[0]) * parseInt(sizeParts[1]);
+                const subtotal = sqFt * pricePerSqFt * quantity;
+                const discount = discountRupees > 0 ? discountRupees : (subtotal * (discountPercent / 100));
+                const total = subtotal - discount;
+
+                item.name = `Plywood (${quality})`;
+                item.details = `${thickness}mm, ${size}ft`;
+                item.quantity = quantity;
+                item.price_per_unit = pricePerSqFt;
+                item.subtotal = subtotal;
+                item.discount = discount;
+                item.discountPercent = discountPercent;
+                item.discountRupees = discountRupees;
+                item.total = total;
+
+            } else { // Additional item
+                const name = document.getElementById('editItemName').value;
+                const details = document.getElementById('editItemDetails').value;
+                const quantity = parseInt(document.getElementById('editItemQuantity').value);
+                const price = parseFloat(document.getElementById('editItemPrice').value);
+                const discountPercent = parseFloat(document.getElementById('editItemDiscountPercent').value) || 0;
+                const discountRupees = parseFloat(document.getElementById('editItemDiscountRupees').value) || 0;
+
+                // Re-validate and update item
+                if (!name || isNaN(quantity) || quantity <= 0 || isNaN(price) || price <= 0) {
+                    showAlert('Please fill in valid details for the additional item in the edit form.');
+                    return;
+                }
+
+                const subtotal = price * quantity;
+                const discount = discountRupees > 0 ? discountRupees : (subtotal * (discountPercent / 100));
+                const total = subtotal - discount;
+
+                item.name = name;
+                item.details = details;
+                item.quantity = quantity;
+                item.price_per_unit = price;
+                item.subtotal = subtotal;
+                item.discount = discount;
+                item.discountPercent = discountPercent;
+                item.discountRupees = discountRupees;
+                item.total = total;
+            }
+
+            renderBillItems();
+            hideEditModal();
+        }
+
+        // Function to hide the edit modal
+        function hideEditModal() {
+            DOMElements.editItemModal.classList.remove('is-open');
+            editingIndex = -1;
+        }
+
+        // Function to generate and render the bill preview
+        function renderBillPreview() {
+            const customer = DOMElements.customerName.value || 'N/A';
+            const whatsapp = DOMElements.whatsappNumber.value || 'N/A';
+            const subtotal = parseFloat(DOMElements.subtotalSpan.textContent);
+            const totalDiscount = parseFloat(DOMElements.totalDiscountSpan.textContent);
+            const delivery = parseFloat(DOMElements.deliveryTotalSpan.textContent);
+            const finalTotal = parseFloat(DOMElements.grandTotalSpan.textContent);
+
+            let itemsTable = items.map(item => `
+                <tr>
+                    <td>${item.name}</td>
+                    <td>${item.details}</td>
+                    <td>${item.quantity}</td>
+                    <td>₹ ${item.total.toFixed(2)}</td>
+                </tr>
+            `).join('');
+
+            const billHtml = `
+                <div class="bill-header">
+                    <h1 style="font-size: 20px; font-weight: bold;">Vishal Plywood and Hardware Store</h1>
+                    <p>Address: Tatayar Khuard, Bhartpar Rani,Deoria 274702India</p>
+                    <p>Phone: 9453338886</p>
+                </div>
+                <div class="bill-details">
+                    <p><strong>Customer:</strong> ${customer}</p>
+                    <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+                    <p><strong>Bill No:</strong> ${Math.floor(Math.random() * 100000)}</p>
+                </div>
+                <table class="bill-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Details</th>
+                            <th>Qty</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${itemsTable}
+                    </tbody>
+                </table>
+                <div class="bill-footer">
+                    <p><strong>Subtotal:</strong> ₹ ${subtotal.toFixed(2)}</p>
+                    <p><strong>Discount:</strong> -₹ ${totalDiscount.toFixed(2)}</p>
+                    <p><strong>Delivery Charges:</strong> +₹ ${delivery.toFixed(2)}</p>
+                    <p><strong>Grand Total:</strong> ₹ ${finalTotal.toFixed(2)}</p>
+                </div>
+            `;
+
+            DOMElements.billContentToCapture.innerHTML = billHtml;
+            DOMElements.billPreviewModal.classList.add('is-open');
+        }
+
+        // Function to hide the bill preview modal
+        function hideBillPreview() {
+            DOMElements.billPreviewModal.classList.remove('is-open');
+        }
+
+        // Function to generate and render the bill QR code
+        function generateQRCode(text, container) {
+            container.innerHTML = '';
+            const typeNumber = 0;
+            const errorCorrectionLevel = 'L';
+            const qr = qrcode(typeNumber, errorCorrectionLevel);
+            qr.addData(text);
+            qr.make();
+            container.innerHTML = qr.createImgTag(6, 12);
+        }
+
+        // Function to generate payment QR code
+        function generatePaymentQR() {
+            if (items.length === 0) {
+                showAlert('Please add items to the bill first.');
+                return;
+            }
+
+            const customer = DOMElements.customerName.value;
+            const amount = grandTotal.toFixed(2);
+            const upiLink = `upi://pay?pa=${UPI_ID}&pn=Vishal%20Plywood%20and%20Hardware&am=${amount}&cu=INR&tn=Payment%20for%20${customer}'s%20Bill`;
+
+            generateQRCode(upiLink, DOMElements.qrCodeContainer);
+            DOMElements.paymentSection.classList.remove('hidden');
+        }
+
+        // Function to generate remaining balance QR code
+        function generateBalanceQR() {
+            const cashReceived = parseFloat(DOMElements.cashReceivedInput.value) || 0;
+            const remainingBalance = grandTotal - cashReceived;
+
+            DOMElements.remainingBalanceSpan.textContent = remainingBalance.toFixed(2);
+
+            if (remainingBalance > 0) {
+                const upiLink = `upi://pay?pa=${UPI_ID}&pn=Vishal%20Plywood%20and%20Hardware&am=${remainingBalance.toFixed(2)}&cu=INR&tn=Remaining%20Balance`;
+                generateQRCode(upiLink, DOMElements.balanceQrContainer);
+                DOMElements.balanceSection.classList.remove('hidden');
+            } else {
+                DOMElements.balanceSection.classList.add('hidden');
+            }
+        }
+
+        // Function to generate a WhatsApp message link
+        function generateWhatsAppMessage() {
+            const whatsappNumber = DOMElements.whatsappNumber.value;
+            if (!whatsappNumber) {
+                showAlert('Please enter the customer\'s WhatsApp number.');
+                return;
+            }
+            const message = `Hello, ${DOMElements.customerName.value || 'customer'}! Your bill from Vishal Plywood and Hardware Store is ready. The total amount is ₹${grandTotal.toFixed(2)}. UPI ID: ${UPI_ID}. We look forward to serving you again.`;
+            DOMElements.whatsappBtn.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+
+            // Trigger the click event to open WhatsApp
+            if (confirm('Do you want to open WhatsApp to send the message?')) {
+                DOMElements.whatsappBtn.click();
+            }
+        }
+
+        // Function to generate an SMS message link
+        function generateSmsMessage() {
+            const whatsappNumber = DOMElements.whatsappNumber.value;
+            if (!whatsappNumber) {
+                showAlert('Please enter the customer\'s mobile number.');
+                return;
+            }
+            const message = `Your bill from Vishal Plywood and Hardware Store is ₹${grandTotal.toFixed(2)}. UPI ID: ${UPI_ID}.`;
+            DOMElements.smsBtn.href = `sms:${whatsappNumber}?body=${encodeURIComponent(message)}`;
+
+            // Trigger the click event to open the SMS app
+            DOMElements.smsBtn.click();
+        }
+
+        // Function to download the bill as a PDF
+        async function downloadPDF() {
+            if (items.length === 0) {
+                showAlert('Cannot download an empty bill.');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const content = DOMElements.billContentToCapture;
+
+            await html2canvas(content, { scale: 2 }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = 210;
+                const pageHeight = 295;
+                const imgHeight = canvas.height * imgWidth / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    doc.addPage();
+                    doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                doc.save(`bill_${DOMElements.customerName.value.replace(/ /g, '_') || 'customer'}.pdf`);
+            });
+        }
+
+        // Function to download the bill as a PNG
+        async function downloadPNG() {
+            if (items.length === 0) {
+                showAlert('Cannot download an empty bill.');
+                return;
+            }
+
+            const content = DOMElements.billContentToCapture;
+
+            await html2canvas(content, { scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/png');
+                link.download = `bill_${DOMElements.customerName.value.replace(/ /g, '_') || 'customer'}.png`;
+                link.click();
+            });
+        }
+
+        // Functions to reset input forms
+        function resetPlywoodForm() {
+            DOMElements.plywoodQuality.value = '';
+            DOMElements.plywoodSize.value = '';
+            DOMElements.plywoodThickness.value = '';
+            DOMElements.plywoodSqFtPrice.value = '';
+            DOMElements.plywoodQuantity.value = '';
+            DOMElements.plywoodDiscountPercent.value = '';
+            DOMElements.plywoodDiscountRupees.value = '';
+        }
+
+        function resetItemForm() {
+            DOMElements.itemName.value = '';
+            DOMElements.itemQuality.value = '';
+            DOMElements.itemQuantity.value = '';
+            DOMElements.itemPrice.value = '';
+            DOMElements.itemGramWeight.value = '';
+            DOMElements.itemDiscountPercent.value = '';
+            DOMElements.itemDiscountRupees.value = '';
+        }
+
+        // Event listeners for user interactions
+        DOMElements.addPlywoodBtn.addEventListener('click', addPlywood);
+        DOMElements.addItemBtn.addEventListener('click', addAdditionalItem);
+        DOMElements.deliveryChargesInput.addEventListener('input', updateBillSummary);
+        DOMElements.previewBillBtn.addEventListener('click', renderBillPreview);
+        DOMElements.generateBillBtn.addEventListener('click', generatePaymentQR);
+        DOMElements.closeModalBtn.addEventListener('click', hideAlert);
+        DOMElements.closePreviewModalBtn.addEventListener('click', hideBillPreview);
+        DOMElements.generateBalanceQrBtn.addEventListener('click', generateBalanceQR);
+        DOMElements.whatsappBtn.addEventListener('click', generateWhatsAppMessage);
+        DOMElements.smsBtn.addEventListener('click', generateSmsMessage);
+        DOMElements.downloadPdfBtn.addEventListener('click', downloadPDF);
+        DOMElements.downloadPngBtn.addEventListener('click', downloadPNG);
+        DOMEElements.saveEditBtn.addEventListener('click', saveEditChanges);
+        DOMElements.cancelEditBtn.addEventListener('click', hideEditModal);
+    </script>
+</body>
+</html>
